@@ -1,0 +1,34 @@
+$kind: http-request
+description: Adds a doctor and keeps the id for the patient requests.
+url: "{{baseUrl}}/doctors"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Dr. Nabila Chowdhury",
+      "specialization": "Cardiology",
+      "hospital": "Square Hospital",
+      "phone": "+8801711112233",
+      "email": "{{doctorEmail}}"
+    }
+scripts:
+  - type: beforeRequest
+    language: text/javascript
+    code: |-
+      pm.collectionVariables.set("doctorEmail", `nabila.${Date.now()}@square.com`);
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("doctor is created without a password", function () {
+        pm.response.to.have.status(201);
+        const body = pm.response.json();
+        pm.expect(body.email).to.eql(pm.collectionVariables.get("doctorEmail"));
+        pm.expect(body.joinedAt).to.match(/^\d{4}-\d{2}-\d{2}$/);
+        pm.expect(body).to.not.have.property("password");
+        pm.collectionVariables.set("doctorId", body.id);
+      });
+order: 3600

@@ -1,0 +1,33 @@
+$kind: http-request
+description: Admits a patient under the doctor created in this run.
+url: "{{baseUrl}}/patients"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Salma Khan",
+      "gender": "Female",
+      "age": 45,
+      "phone": "+8801712345678",
+      "condition": "Critical",
+      "doctorId": "{{doctorId}}",
+      "notes": "Admitted this morning"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("patient is admitted with today's date", function () {
+        pm.response.to.have.status(201);
+        const body = pm.response.json();
+        pm.expect(body.doctorId).to.eql(pm.collectionVariables.get("doctorId"));
+        pm.expect(body.admittedAt).to.match(/^\d{4}-\d{2}-\d{2}$/);
+        pm.expect(body.notes).to.eql("Admitted this morning");
+        pm.collectionVariables.set("patientId", body.id);
+        pm.collectionVariables.set("admittedAt", body.admittedAt);
+      });
+order: 3700

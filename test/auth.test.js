@@ -137,7 +137,7 @@ describe("authentication", () => {
     assert.equal(hidden.status, 401);
 
     const unknown = await request(app)
-      .get("/doctors")
+      .get("/not-a-resource")
       .set("Authorization", `Bearer ${token}`);
     assert.equal(unknown.status, 404);
     assert.equal(unknown.body.code, "not_found");

@@ -1,0 +1,23 @@
+$kind: http-request
+description: Dashboard totals come from the same doctor and patient records.
+url: "{{baseUrl}}/dashboard"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("dashboard reports the network", function () {
+        pm.response.to.have.status(200);
+        const body = pm.response.json();
+        pm.expect(body.totalDoctors).to.be.at.least(1);
+        pm.expect(body.registrations).to.have.lengthOf(30);
+        pm.expect(body.conditions.map((item) => item.condition)).to.eql([
+          "Stable",
+          "Recovering",
+          "Critical",
+          "Under Observation",
+        ]);
+      });
+order: 3970

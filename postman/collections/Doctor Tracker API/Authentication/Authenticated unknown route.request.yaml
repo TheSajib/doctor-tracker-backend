@@ -1,6 +1,6 @@
 $kind: http-request
-description: A live session reaches routing. Doctor records are not implemented yet, so this is 404.
-url: "{{baseUrl}}/doctors"
+description: A live session reaches routing. An unknown path is 404 rather than hidden.
+url: "{{baseUrl}}/not-a-resource"
 method: GET
 headers:
   Accept: application/json

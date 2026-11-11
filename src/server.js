@@ -3,6 +3,7 @@ import { createApp } from "./app.js";
 import { getConfig } from "./config.js";
 import { connectDb } from "./db.js";
 import { seedDemoUser } from "./auth/service.js";
+import { seedClinic } from "./clinic/seed.js";
 
 const config = getConfig();
 
@@ -16,6 +17,7 @@ try {
 }
 
 await seedDemoUser(config);
+await seedClinic();
 
 const app = createApp(config);
 const server = app.listen(config.port, () => {

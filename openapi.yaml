@@ -3,7 +3,7 @@ info:
   title: Doctor Tracker API
   version: 1.0.0
   description: |
-    Authentication for the Doctor Tracker clinic portal.
+    Authentication, doctors, patients, and the clinic dashboard for the Doctor Tracker portal.
     Paths are unversioned so the existing Next.js client can keep calling
     `/auth/login` and `/auth/signup`. Every route except `GET /health`,
     `POST /auth/login`, and `POST /auth/signup` requires a bearer token for
@@ -16,6 +16,9 @@ servers:
 tags:
   - name: Health
   - name: Authentication
+  - name: Doctors
+  - name: Patients
+  - name: Dashboard
 paths:
   /health:
     get:
@@ -216,6 +219,228 @@ paths:
               example:
                 message: Sign in required.
                 code: unauthorized
+  /doctors:
+    get:
+      tags: [Doctors]
+      operationId: listDoctors
+      summary: List doctors
+      description: |
+        Search matches name, hospital, email, phone, and specialization.
+        `range` is `7d`, `30d`, or `90d` and is omitted for any date.
+        `specialization` is omitted for every specialization.
+        Each row includes `patientCount`.
+        Rows are newest first: latest `joinedAt`, then latest id.
+      parameters:
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: specialization
+          schema: { type: string }
+        - in: query
+          name: range
+          schema: { type: string, enum: ["7d", "30d", "90d"] }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 6 }
+      responses:
+        "200":
+          description: One page of doctors.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DoctorPage"
+        "401":
+          description: Sign in required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      tags: [Doctors]
+      operationId: createDoctor
+      summary: Add a doctor
+      description: Joined date is today. A duplicate email returns 409.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DoctorInput"
+            example:
+              name: Dr. Nabila Chowdhury
+              specialization: Cardiology
+              hospital: Square Hospital
+              phone: "+8801711112233"
+              email: nabila@square.com
+      responses:
+        "201":
+          description: Doctor created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Doctor"
+        "400":
+          description: Validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Email already used by a doctor.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: A doctor with this email already exists.
+                code: email_taken
+  /doctors/{id}:
+    get:
+      tags: [Doctors]
+      operationId: getDoctor
+      summary: One doctor
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Doctor including patientCount.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DoctorRow"
+        "404":
+          description: No doctor with this id.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /patients:
+    get:
+      tags: [Patients]
+      operationId: listPatients
+      summary: List patients
+      description: |
+        Search matches patient name, phone, and doctor name.
+        Each row includes `doctorName`. Admission dates are `YYYY-MM-DD`.
+        Rows are newest first: latest `admittedAt`, then latest id.
+      parameters:
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: condition
+          schema: { type: string }
+        - in: query
+          name: doctorId
+          schema: { type: string }
+        - in: query
+          name: range
+          schema: { type: string, enum: ["7d", "30d", "90d"] }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 8 }
+      responses:
+        "200":
+          description: One page of patients.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PatientPage"
+    post:
+      tags: [Patients]
+      operationId: createPatient
+      summary: Admit a patient
+      description: Admission date is today and is not accepted from the client.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatientInput"
+      responses:
+        "201":
+          description: Patient admitted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Patient"
+        "400":
+          description: Validation failed, or the doctor is not in the network.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /patients/{id}:
+    patch:
+      tags: [Patients]
+      operationId: updatePatient
+      summary: Update a patient
+      description: Same body as create. The admission date stays unchanged.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatientInput"
+      responses:
+        "200":
+          description: Updated patient.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Patient"
+        "404":
+          description: Patient is no longer on the list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [Patients]
+      operationId: deletePatient
+      summary: Remove a patient
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: Patient removed.
+        "404":
+          description: Patient is no longer on the list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /dashboard:
+    get:
+      tags: [Dashboard]
+      operationId: getDashboard
+      summary: Clinic dashboard
+      description: Totals, condition mix, patients per doctor, and admissions for the last 30 days.
+      responses:
+        "200":
+          description: Dashboard computed from the current doctors and patients.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
 components:
   securitySchemes:
     bearerAuth:
@@ -268,6 +493,130 @@ components:
           type: string
           minLength: 8
           maxLength: 72
+    Doctor:
+      type: object
+      required: [id, name, specialization, hospital, phone, email, joinedAt]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        specialization: { type: string }
+        hospital: { type: string }
+        phone: { type: string }
+        email: { type: string, format: email }
+        joinedAt: { type: string, description: "YYYY-MM-DD" }
+    DoctorRow:
+      allOf:
+        - $ref: "#/components/schemas/Doctor"
+        - type: object
+          required: [patientCount]
+          properties:
+            patientCount: { type: integer }
+    DoctorInput:
+      type: object
+      required: [name, specialization, hospital, phone, email]
+      properties:
+        name: { type: string, minLength: 3, maxLength: 80 }
+        specialization:
+          type: string
+          enum: [Cardiology, Dermatology, Orthopedics, Neurology, Pediatrics, Gynecology, Oncology, General Medicine]
+        hospital: { type: string }
+        phone: { type: string, description: "E.164, for example +8801711112233" }
+        email: { type: string, format: email }
+    DoctorPage:
+      type: object
+      required: [items, total, page, pageSize, pages, from, to]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/DoctorRow"
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+        pages: { type: integer }
+        from: { type: integer }
+        to: { type: integer }
+    Patient:
+      type: object
+      required: [id, name, gender, age, phone, condition, doctorId, admittedAt, notes]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        gender: { type: string, enum: [Male, Female, Other] }
+        age: { type: integer }
+        phone: { type: string }
+        condition: { type: string, enum: [Stable, Recovering, Critical, Under Observation] }
+        doctorId: { type: string }
+        admittedAt: { type: string, description: "YYYY-MM-DD. Set by the server." }
+        notes: { type: string }
+    PatientRow:
+      allOf:
+        - $ref: "#/components/schemas/Patient"
+        - type: object
+          required: [doctorName]
+          properties:
+            doctorName: { type: string }
+    PatientInput:
+      type: object
+      required: [name, gender, age, phone, condition, doctorId, notes]
+      properties:
+        name: { type: string, minLength: 3, maxLength: 80 }
+        gender: { type: string, enum: [Male, Female, Other] }
+        age: { type: integer, minimum: 0, maximum: 120 }
+        phone: { type: string }
+        condition: { type: string, enum: [Stable, Recovering, Critical, Under Observation] }
+        doctorId: { type: string }
+        notes: { type: string, maxLength: 500 }
+    PatientPage:
+      type: object
+      required: [items, total, page, pageSize, pages, from, to]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PatientRow"
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+        pages: { type: integer }
+        from: { type: integer }
+        to: { type: integer }
+    Dashboard:
+      type: object
+      required: [totalDoctors, totalPatients, newPatients7d, criticalCases, avgPerDoctor, conditions, patientsPerDoctor, registrations]
+      properties:
+        totalDoctors: { type: integer }
+        totalPatients: { type: integer }
+        newPatients7d: { type: integer }
+        criticalCases: { type: integer }
+        avgPerDoctor: { type: number }
+        conditions:
+          type: array
+          items:
+            type: object
+            required: [condition, count]
+            properties:
+              condition: { type: string }
+              count: { type: integer }
+        patientsPerDoctor:
+          type: array
+          items:
+            type: object
+            required: [id, name, count]
+            properties:
+              id: { type: string }
+              name: { type: string }
+              count: { type: integer }
+        registrations:
+          type: array
+          items:
+            type: object
+            required: [date, label, registrations, critical]
+            properties:
+              date: { type: string }
+              label: { type: string }
+              registrations: { type: integer }
+              critical: { type: integer }
     Error:
       type: object
       required: [message, code]

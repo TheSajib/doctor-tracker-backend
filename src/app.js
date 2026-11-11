@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import { asyncHandler } from "./async-handler.js";
 import { authRoutes, protectedAuthRoutes } from "./auth/routes.js";
 import { requireAuth } from "./auth/require-auth.js";
+import { clinicRoutes } from "./clinic/routes.js";
 import { errorHandler } from "./errors.js";
 
 function originAllowed(origin, config) {
@@ -71,6 +72,7 @@ export function createApp(config, options = {}) {
   // Every path after the public auth and health routes requires a live session.
   app.use(requireAuth(config));
   app.use("/auth", protectedAuthRoutes());
+  app.use(clinicRoutes());
 
   app.use((_req, res) => {
     res.status(404).json({ message: "Not found.", code: "not_found" });

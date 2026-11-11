@@ -1,0 +1,15 @@
+$kind: http-request
+description: Removes the patient created in this run.
+url: "{{baseUrl}}/patients/{{patientId}}"
+method: DELETE
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("patient is removed", function () {
+        pm.response.to.have.status(204);
+        pm.expect(pm.response.text()).to.eql("");
+      });
+order: 3950

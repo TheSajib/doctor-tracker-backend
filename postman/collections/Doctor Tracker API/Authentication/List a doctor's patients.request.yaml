@@ -1,0 +1,19 @@
+$kind: http-request
+description: Filters by the new doctor and the patient's name.
+url: "{{baseUrl}}/patients?doctorId={{doctorId}}&condition=Critical&search=Salma"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("patient list includes the doctor name", function () {
+        pm.response.to.have.status(200);
+        const body = pm.response.json();
+        pm.expect(body.total).to.be.at.least(1);
+        const match = body.items.find((item) => item.id === pm.collectionVariables.get("patientId"));
+        pm.expect(match.doctorName).to.eql("Dr. Nabila Chowdhury");
+        pm.expect(match.condition).to.eql("Critical");
+      });
+order: 3800

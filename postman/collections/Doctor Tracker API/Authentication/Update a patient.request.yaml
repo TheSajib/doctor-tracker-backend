@@ -1,0 +1,31 @@
+$kind: http-request
+description: Changes the condition. The admission date stays the same.
+url: "{{baseUrl}}/patients/{{patientId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+  Accept: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Salma Khan",
+      "gender": "Female",
+      "age": 46,
+      "phone": "+8801712345678",
+      "condition": "Recovering",
+      "doctorId": "{{doctorId}}",
+      "notes": "Improving"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("admission date is unchanged", function () {
+        pm.response.to.have.status(200);
+        const body = pm.response.json();
+        pm.expect(body.condition).to.eql("Recovering");
+        pm.expect(body.age).to.eql(46);
+        pm.expect(body.admittedAt).to.eql(pm.collectionVariables.get("admittedAt"));
+      });
+order: 3900

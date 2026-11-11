@@ -12,6 +12,10 @@ variables:
   baseUrl: http://localhost:4000
   bearerToken: ""
   signupEmail: ""
+  doctorEmail: ""
+  doctorId: ""
+  patientId: ""
+  admittedAt: ""
 auth:
   - id: f144ac04-139b-450c-a993-c6580d9da0ce
     type: bearer

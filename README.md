@@ -1,8 +1,6 @@
 # Doctor Tracker API
 
-Standalone Express service for the Doctor Tracker portal. This step covers authentication: accounts live in MongoDB, passwords are hashed, and every route except health, login, and signup requires a live session.
-
-Doctors, patients, and the dashboard are not part of this service yet. The Next.js app still keeps those records locally and sends sign-in to this API.
+Standalone Express service for the Doctor Tracker portal. Accounts, doctors, and patients live in MongoDB. Passwords are hashed. Every route except health, login, and signup requires a live session.
 
 ## Setup
 
@@ -23,6 +21,8 @@ On startup it creates the demo account when that email is not already registered
 | --- | --- |
 | sajibcse28@gmail.com | Admin@123 |
 
+If the doctor collection is empty, startup also loads the sample network of 6 doctors and 33 patients.
+
 ## Auth contract
 
 Paths stay unversioned because the Next.js client already calls them.
@@ -34,6 +34,14 @@ Paths stay unversioned because the Next.js client already calls them.
 | POST | `/auth/login` | Public | `200` same session shape |
 | GET | `/auth/me` | Bearer | `{ user }` |
 | POST | `/auth/logout` | Bearer | `204` and the token stops working |
+| GET | `/doctors` | Bearer | Page of doctors. Query: `search`, `specialization`, `range`, `page`, `limit` |
+| POST | `/doctors` | Bearer | `201` doctor. Joined date is today |
+| GET | `/doctors/:id` | Bearer | Doctor plus `patientCount` |
+| GET | `/patients` | Bearer | Page of patients. Query: `search`, `condition`, `doctorId`, `range`, `page`, `limit` |
+| POST | `/patients` | Bearer | `201` patient. Admission date is today |
+| PATCH | `/patients/:id` | Bearer | Same body as create. Admission date stays put |
+| DELETE | `/patients/:id` | Bearer | `204` |
+| GET | `/dashboard` | Bearer | Totals, conditions, patients per doctor, 30-day series |
 
 Any other path without a bearer token returns `401`. With a valid token and no matching resource, it returns `404`.
 
