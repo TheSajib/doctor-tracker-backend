@@ -1,0 +1,33 @@
+$kind: http-example
+name: Account created and session opened.
+request:
+  url: "{{baseUrl}}/auth/signup"
+  method: POST
+  headers:
+    - key: Accept
+      value: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "name": "Amina Rahman",
+        "email": "amina@example.com",
+        "password": "Clinic#2026"
+      }
+response:
+  statusCode: 201
+  statusText: Created
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.signature",
+        "user": {
+          "id": "6740c5a1b2e4f0a1d2c3b4e5",
+          "name": "Amina Rahman",
+          "email": "amina@example.com"
+        }
+      }
+order: 1000

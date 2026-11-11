@@ -1,0 +1,30 @@
+$kind: http-request
+description: Unknown email and a wrong password use the same 401 message.
+url: "{{baseUrl}}/auth/login"
+method: POST
+auth:
+  type: noauth
+headers:
+  Content-Type: application/json
+  Accept: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "missing@example.com",
+      "password": "not-the-password"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("unknown account is rejected without a token", function () {
+        pm.response.to.have.status(401);
+        const body = pm.response.json();
+        pm.expect(body.message).to.eql("Email or password is incorrect.");
+        pm.expect(body.code).to.eql("invalid_credentials");
+        pm.expect(body.token).to.eql(undefined);
+      });
+settings: {}
+examples: ./.resources/Sign in.resources/examples
+order: 2500

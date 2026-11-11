@@ -1,0 +1,19 @@
+$kind: http-request
+description: Public. Does not require a session.
+url: "{{baseUrl}}/health"
+method: GET
+auth:
+  type: noauth
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("health is public", function () {
+        pm.response.to.have.status(200);
+        pm.expect(pm.response.json()).to.eql({ status: "ok" });
+      });
+settings: {}
+examples: ./.resources/Service health.resources/examples
+order: 1000

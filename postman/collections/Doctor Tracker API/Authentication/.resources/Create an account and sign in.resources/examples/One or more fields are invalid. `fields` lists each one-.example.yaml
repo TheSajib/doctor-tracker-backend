@@ -1,0 +1,32 @@
+$kind: http-example
+name: One or more fields are invalid. `fields` lists each one.
+request:
+  url: "{{baseUrl}}/auth/signup"
+  method: POST
+  headers:
+    - key: Accept
+      value: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "name": "Amina Rahman",
+        "email": "amina@example.com",
+        "password": "Clinic#2026"
+      }
+response:
+  statusCode: 400
+  statusText: Bad Request
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "message": "Use at least 8 characters",
+        "code": "validation_error",
+        "fields": {
+          "password": "Use at least 8 characters"
+        }
+      }
+order: 2000

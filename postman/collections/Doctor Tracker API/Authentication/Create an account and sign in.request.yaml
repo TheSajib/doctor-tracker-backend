@@ -1,0 +1,39 @@
+$kind: http-request
+description: |
+  Creates a clinic account, stores a bcrypt password hash, and opens
+  a session. Duplicate emails return 409.
+url: "{{baseUrl}}/auth/signup"
+method: POST
+auth:
+  type: noauth
+headers:
+  Content-Type: application/json
+  Accept: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Amina Rahman",
+      "email": "{{signupEmail}}",
+      "password": "Clinic#2026"
+    }
+scripts:
+  - type: beforeRequest
+    language: text/javascript
+    code: |-
+      pm.collectionVariables.set("signupEmail", `staff.${Date.now()}@example.com`);
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("signup returns a session and no password", function () {
+        pm.response.to.have.status(201);
+        const body = pm.response.json();
+        pm.expect(body.token).to.be.a("string").and.not.empty;
+        pm.expect(body.user.email).to.eql(pm.collectionVariables.get("signupEmail"));
+        pm.expect(body.user).to.not.have.property("password");
+        pm.expect(body.user).to.not.have.property("passwordHash");
+        pm.expect(body).to.not.have.property("password");
+      });
+settings: {}
+examples: ./.resources/Create an account and sign in.resources/examples
+order: 1000

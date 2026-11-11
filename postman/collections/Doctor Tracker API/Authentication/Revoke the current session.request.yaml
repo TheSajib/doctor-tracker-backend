@@ -1,0 +1,19 @@
+$kind: http-request
+description: |
+  Marks the session revoked. The same bearer token then fails
+  `GET /auth/me` with 401. No response body.
+url: "{{baseUrl}}/auth/logout"
+method: POST
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("logout returns no body", function () {
+        pm.response.to.have.status(204);
+        pm.expect(pm.response.text()).to.eql("");
+      });
+settings: {}
+examples: ./.resources/Revoke the current session.resources/examples
+order: 4000

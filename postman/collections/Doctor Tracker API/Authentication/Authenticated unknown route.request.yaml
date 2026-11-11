@@ -1,0 +1,16 @@
+$kind: http-request
+description: A live session reaches routing. Doctor records are not implemented yet, so this is 404.
+url: "{{baseUrl}}/doctors"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("authenticated unknown resource is not found", function () {
+        pm.response.to.have.status(404);
+        pm.expect(pm.response.json().code).to.eql("not_found");
+      });
+settings: {}
+order: 3500

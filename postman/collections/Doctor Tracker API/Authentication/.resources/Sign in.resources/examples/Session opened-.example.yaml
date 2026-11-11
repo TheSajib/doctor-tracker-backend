@@ -1,0 +1,32 @@
+$kind: http-example
+name: Session opened.
+request:
+  url: "{{baseUrl}}/auth/login"
+  method: POST
+  headers:
+    - key: Accept
+      value: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "email": "sajibcse28@gmail.com",
+        "password": "Admin@123"
+      }
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.signature",
+        "user": {
+          "id": "6740c5a1b2e4f0a1d2c3b4e5",
+          "name": "Sajib",
+          "email": "sajibcse28@gmail.com"
+        }
+      }
+order: 1000

@@ -1,0 +1,24 @@
+$kind: http-example
+name: Missing, invalid, expired, or already revoked token.
+request:
+  url: "{{baseUrl}}/auth/logout"
+  method: POST
+  headers:
+    - key: Accept
+      value: application/json
+  body:
+    type: text
+    content: ""
+response:
+  statusCode: 401
+  statusText: Unauthorized
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "message": "Sign in required.",
+        "code": "unauthorized"
+      }
+order: 2000

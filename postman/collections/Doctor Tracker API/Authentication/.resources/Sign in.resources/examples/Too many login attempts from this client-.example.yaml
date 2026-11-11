@@ -1,0 +1,28 @@
+$kind: http-example
+name: Too many login attempts from this client.
+request:
+  url: "{{baseUrl}}/auth/login"
+  method: POST
+  headers:
+    - key: Accept
+      value: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "email": "sajibcse28@gmail.com",
+        "password": "Admin@123"
+      }
+response:
+  statusCode: 429
+  statusText: Too Many Requests
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "message": "Too many attempts. Try again later.",
+        "code": "rate_limited"
+      }
+order: 3000

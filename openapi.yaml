@@ -1,0 +1,285 @@
+openapi: 3.0.3
+info:
+  title: Doctor Tracker API
+  version: 1.0.0
+  description: |
+    Authentication for the Doctor Tracker clinic portal.
+    Paths are unversioned so the existing Next.js client can keep calling
+    `/auth/login` and `/auth/signup`. Every route except `GET /health`,
+    `POST /auth/login`, and `POST /auth/signup` requires a bearer token for
+    a session that has not been revoked. Any authenticated clinic account
+    may use the portal; there is no second role yet.
+    Passwords are never returned. Errors always include `message` and `code`.
+    The Next.js client displays `message`.
+servers:
+  - url: http://localhost:4000
+tags:
+  - name: Health
+  - name: Authentication
+paths:
+  /health:
+    get:
+      tags: [Health]
+      operationId: health
+      summary: Service health
+      description: Public. Does not require a session.
+      security: []
+      responses:
+        "200":
+          description: Database connection is up.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+              example:
+                status: ok
+        "503":
+          description: Database is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: Database unavailable.
+                code: unavailable
+  /auth/signup:
+    post:
+      tags: [Authentication]
+      operationId: signup
+      summary: Create an account and sign in
+      description: |
+        Creates a clinic account, stores a bcrypt password hash, and opens
+        a session. Duplicate emails return 409.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupRequest"
+            example:
+              name: Amina Rahman
+              email: amina@example.com
+              password: Clinic#2026
+      responses:
+        "201":
+          description: Account created and session opened.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+              example:
+                token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.signature
+                user:
+                  id: 6740c5a1b2e4f0a1d2c3b4e5
+                  name: Amina Rahman
+                  email: amina@example.com
+        "400":
+          description: One or more fields are invalid. `fields` lists each one.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: Use at least 8 characters
+                code: validation_error
+                fields:
+                  password: Use at least 8 characters
+        "409":
+          description: An account with this email already exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: An account with this email already exists.
+                code: email_taken
+        "429":
+          description: Too many signup attempts from this client.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: Too many attempts. Try again later.
+                code: rate_limited
+  /auth/login:
+    post:
+      tags: [Authentication]
+      operationId: login
+      summary: Sign in
+      description: |
+        Unknown emails and wrong passwords return the same 401 message.
+        Email is trimmed and compared case-insensitively.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            example:
+              email: sajibcse28@gmail.com
+              password: Admin@123
+      responses:
+        "200":
+          description: Session opened.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+              example:
+                token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.signature
+                user:
+                  id: 6740c5a1b2e4f0a1d2c3b4e5
+                  name: Sajib
+                  email: sajibcse28@gmail.com
+        "401":
+          description: Email or password is incorrect.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: Email or password is incorrect.
+                code: invalid_credentials
+        "429":
+          description: Too many login attempts from this client.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: Too many attempts. Try again later.
+                code: rate_limited
+  /auth/me:
+    get:
+      tags: [Authentication]
+      operationId: currentUser
+      summary: Current signed-in user
+      description: Confirms the bearer token still maps to a live session.
+      responses:
+        "200":
+          description: The account for this session.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [user]
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+              example:
+                user:
+                  id: 6740c5a1b2e4f0a1d2c3b4e5
+                  name: Sajib
+                  email: sajibcse28@gmail.com
+        "401":
+          description: Missing, invalid, expired, or revoked token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                missing:
+                  summary: No token
+                  value:
+                    message: Sign in required.
+                    code: unauthorized
+                revoked:
+                  summary: Logged out
+                  value:
+                    message: Session expired. Sign in again.
+                    code: session_expired
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      operationId: logout
+      summary: Revoke the current session
+      description: |
+        Marks the session revoked. The same bearer token then fails
+        `GET /auth/me` with 401. No response body.
+      responses:
+        "204":
+          description: Session revoked.
+        "401":
+          description: Missing, invalid, expired, or already revoked token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: Sign in required.
+                code: unauthorized
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT from login or signup. Send as Authorization Bearer token."
+  schemas:
+    User:
+      type: object
+      required: [id, name, email]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+    Session:
+      type: object
+      required: [token, user]
+      properties:
+        token:
+          type: string
+          description: Bearer token. Expires in 7 days and can be revoked with logout.
+        user:
+          $ref: "#/components/schemas/User"
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    SignupRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 80
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          maxLength: 72
+    Error:
+      type: object
+      required: [message, code]
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+          description: Present on validation errors, one message per field.
+security:
+  - bearerAuth: []

@@ -1,0 +1,6 @@
+workflows:
+  syncSpecToCollection:
+    - spec: ../openapi.yaml
+      collection: ../postman/collections/Doctor Tracker API
+      options:
+        folderStrategy: Tags

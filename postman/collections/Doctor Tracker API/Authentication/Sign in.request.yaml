@@ -1,0 +1,35 @@
+$kind: http-request
+description: |
+  Unknown emails and wrong passwords return the same 401 message.
+  Email is trimmed and compared case-insensitively.
+url: "{{baseUrl}}/auth/login"
+method: POST
+auth:
+  type: noauth
+headers:
+  Content-Type: application/json
+  Accept: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "sajibcse28@gmail.com",
+      "password": "Admin@123"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("login opens a session without returning the password", function () {
+        pm.response.to.have.status(200);
+        const body = pm.response.json();
+        pm.expect(body.token).to.be.a("string").and.not.empty;
+        pm.expect(body.user.email).to.eql("sajibcse28@gmail.com");
+        pm.expect(body.user).to.include.keys("id", "name", "email");
+        pm.expect(body.user).to.not.have.property("password");
+        pm.expect(body.user).to.not.have.property("passwordHash");
+        pm.collectionVariables.set("bearerToken", body.token);
+      });
+settings: {}
+examples: ./.resources/Sign in.resources/examples
+order: 2000

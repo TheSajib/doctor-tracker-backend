@@ -1,0 +1,20 @@
+$kind: collection
+description: |
+  Authentication for the Doctor Tracker clinic portal.
+  Paths are unversioned so the existing Next.js client can keep calling
+  `/auth/login` and `/auth/signup`. Every route except `GET /health`,
+  `POST /auth/login`, and `POST /auth/signup` requires a bearer token for
+  a session that has not been revoked. Any authenticated clinic account
+  may use the portal; there is no second role yet.
+  Passwords are never returned. Errors always include `message` and `code`.
+  The Next.js client displays `message`.
+variables:
+  baseUrl: http://localhost:4000
+  bearerToken: ""
+  signupEmail: ""
+auth:
+  - id: f144ac04-139b-450c-a993-c6580d9da0ce
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{bearerToken}}"

@@ -1,0 +1,29 @@
+$kind: http-example
+name: An account with this email already exists.
+request:
+  url: "{{baseUrl}}/auth/signup"
+  method: POST
+  headers:
+    - key: Accept
+      value: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "name": "Amina Rahman",
+        "email": "amina@example.com",
+        "password": "Clinic#2026"
+      }
+response:
+  statusCode: 409
+  statusText: Conflict
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "message": "An account with this email already exists.",
+        "code": "email_taken"
+      }
+order: 3000

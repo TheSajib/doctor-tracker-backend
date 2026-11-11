@@ -1,0 +1,31 @@
+$kind: http-request
+description: Same email as the signup request that just ran. Expects 409.
+url: "{{baseUrl}}/auth/signup"
+method: POST
+auth:
+  type: noauth
+headers:
+  Content-Type: application/json
+  Accept: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Amina Rahman",
+      "email": "{{signupEmail}}",
+      "password": "Clinic#2026"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("duplicate email is rejected", function () {
+        pm.response.to.have.status(409);
+        const body = pm.response.json();
+        pm.expect(body.code).to.eql("email_taken");
+        pm.expect(body.message).to.eql("An account with this email already exists.");
+        pm.expect(body.token).to.eql(undefined);
+      });
+settings: {}
+examples: ./.resources/Create an account and sign in.resources/examples
+order: 1500

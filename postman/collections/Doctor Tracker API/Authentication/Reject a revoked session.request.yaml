@@ -1,0 +1,19 @@
+$kind: http-request
+description: Uses the bearer token saved at login, after logout has revoked it.
+url: "{{baseUrl}}/auth/me"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("revoked session is rejected", function () {
+        pm.response.to.have.status(401);
+        const body = pm.response.json();
+        pm.expect(body.code).to.eql("session_expired");
+        pm.expect(body.message).to.eql("Session expired. Sign in again.");
+      });
+settings: {}
+examples: ./.resources/Current signed-in user.resources/examples
+order: 5000

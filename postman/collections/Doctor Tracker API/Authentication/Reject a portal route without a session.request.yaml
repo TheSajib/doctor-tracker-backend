@@ -1,0 +1,18 @@
+$kind: http-request
+description: A portal resource without a bearer token is rejected before it can 404.
+url: "{{baseUrl}}/doctors"
+method: GET
+auth:
+  type: noauth
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("missing token cannot reach a portal route", function () {
+        pm.response.to.have.status(401);
+        pm.expect(pm.response.json().code).to.eql("unauthorized");
+      });
+settings: {}
+order: 500

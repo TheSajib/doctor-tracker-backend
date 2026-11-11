@@ -1,0 +1,20 @@
+$kind: http-request
+description: Confirms the bearer token still maps to a live session.
+url: "{{baseUrl}}/auth/me"
+method: GET
+headers:
+  Accept: application/json
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("bearer token returns the signed-in user", function () {
+        pm.response.to.have.status(200);
+        const body = pm.response.json();
+        pm.expect(body.user.email).to.eql("sajibcse28@gmail.com");
+        pm.expect(body.user).to.not.have.property("password");
+        pm.expect(body.user).to.not.have.property("passwordHash");
+      });
+settings: {}
+examples: ./.resources/Current signed-in user.resources/examples
+order: 3000
