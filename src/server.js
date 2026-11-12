@@ -6,26 +6,28 @@ import { seedDemoUser } from "./auth/service.js";
 import { seedClinic } from "./clinic/seed.js";
 
 const config = getConfig();
+let server;
 
-try {
-  await connectDb(config.mongoUri);
-} catch {
-  console.error(
-    "Could not connect to MongoDB. Check MONGODB_URI and start the database with: docker compose up -d",
-  );
-  process.exit(1);
+async function start() {
+  try {
+    await connectDb(config.mongoUri);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    console.error(`Could not connect to MongoDB. ${detail}`);
+    process.exit(1);
+  }
+
+  await seedDemoUser(config);
+  await seedClinic();
+
+  const app = createApp(config);
+  server = app.listen(config.port, () => {
+    console.log(`Doctor Tracker API listening on http://localhost:${config.port}`);
+  });
 }
 
-await seedDemoUser(config);
-await seedClinic();
-
-const app = createApp(config);
-const server = app.listen(config.port, () => {
-  console.log(`Doctor Tracker API listening on http://localhost:${config.port}`);
-});
-
 async function shutdown() {
-  server.close();
+  server?.close();
   await mongoose.disconnect();
   process.exit(0);
 }
@@ -35,4 +37,9 @@ process.on("SIGINT", () => {
 });
 process.on("SIGTERM", () => {
   void shutdown();
+});
+
+start().catch((error) => {
+  console.error(error);
+  process.exit(1);
 });
